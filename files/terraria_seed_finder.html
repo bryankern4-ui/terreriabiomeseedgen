@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraria World Seed Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .biome-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .biome-select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .biome-select:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .biome-select.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .biome-layout {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .biome-badge {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .biome-arrow {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #1976d2;
+            margin: 0;
+        }
+
+        .seed-input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Terraria World Seed Finder</h1>
+            <p>Find seeds with specific biome adjacencies</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <p>⚠️ Note: This is a simulation tool. Actual Terraria world generation may differ slightly.</p>
+            </div>
+
+            <!-- Seed Analysis Section -->
+            <div class="section seed-input-section">
+                <h2>🔍 Analyze Specific Seed</h2>
+                <div class="form-group">
+                    <label for="seedInput">Enter Seed:</label>
+                    <input type="text" id="seedInput" placeholder="e.g., 1234567890">
+                </div>
+                <div class="form-group">
+                    <label for="analyzeSeedSize">World Size:</label>
+                    <select id="analyzeSeedSize">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <button onclick="analyzeSeed()">Analyze Seed</button>
+            </div>
+
+            <!-- Seed Finder Section -->
+            <div class="section">
+                <h2>🎯 Find Seeds with Adjacent Biomes</h2>
+                
+                <div class="form-group">
+                    <label>Select First Biome:</label>
+                    <div class="biome-grid" id="biome1Grid"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Second Biome (should be adjacent to first):</label>
+                    <div class="biome-grid" id="biome2Grid"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="worldSize">World Size:</label>
+                    <select id="worldSize">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="numSeeds">Number of Seeds to Find:</label>
+                    <input type="number" id="numSeeds" value="5" min="1" max="20">
+                </div>
+
+                <button id="searchBtn" onclick="findSeeds()">Find Seeds</button>
+            </div>
+
+            <div id="status" class="status"></div>
+            <div id="results" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const BIOMES = {
+            FOREST: 'Forest',
+            DESERT: 'Desert',
+            SNOW: 'Snow',
+            JUNGLE: 'Jungle',
+            CORRUPTION: 'Corruption',
+            CRIMSON: 'Crimson',
+            MUSHROOM: 'Mushroom'
+        };
+
+        let selectedBiome1 = null;
+        let selectedBiome2 = null;
+
+        // Initialize biome grids
+        function initBiomeGrids() {
+            const grid1 = document.getElementById('biome1Grid');
+            const grid2 = document.getElementById('biome2Grid');
+
+            Object.entries(BIOMES).forEach(([key, value]) => {
+                const btn1 = createBiomeButton(value, () => selectBiome(1, value));
+                const btn2 = createBiomeButton(value, () => selectBiome(2, value));
+                grid1.appendChild(btn1);
+                grid2.appendChild(btn2);
+            });
+        }
+
+        function createBiomeButton(biome, onClick) {
+            const btn = document.createElement('div');
+            btn.className = 'biome-select';
+            btn.textContent = biome;
+            btn.onclick = onClick;
+            btn.dataset.biome = biome;
+            return btn;
+        }
+
+        function selectBiome(gridNum, biome) {
+            const grid = document.getElementById(`biome${gridNum}Grid`);
+            grid.querySelectorAll('.biome-select').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            if (gridNum === 1) selectedBiome1 = biome;
+            else selectedBiome2 = biome;
+        }
+
+        class WorldGenerator {
+            constructor(seed, size = 'medium') {
+                this.seed = seed;
+                this.size = size;
+                this.random = this.seededRandom(this.hashCode(seed));
+            }
+
+            hashCode(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash = hash & hash;
+                }
+                return Math.abs(hash);
+            }
+
+            seededRandom(seed) {
+                let value = seed;
+                return function() {
+                    value = (value * 9301 + 49297) % 233280;
+                    return value / 233280;
+                };
+            }
+
+            generate() {
+                const sizeMap = { small: 5, medium: 7, large: 9 };
+                const numSlots = sizeMap[this.size];
+
+                const evil = this.random() > 0.5 ? 'Corruption' : 'Crimson';
+                const coreBiomes = ['Forest', 'Desert', 'Snow', 'Jungle', evil];
+                
+                // Shuffle
+                for (let i = coreBiomes.length - 1; i > 0; i--) {
+                    const j = Math.floor(this.random() * (i + 1));
+                    [coreBiomes[i], coreBiomes[j]] = [coreBiomes[j], coreBiomes[i]];
+                }
+
+                const biomes = coreBiomes.slice(0, numSlots).map((b, i) => ({ biome: b, pos: i }));
+
+                if (numSlots > 7 && this.random() > 0.6) {
+                    biomes.push({ biome: 'Mushroom', pos: biomes.length });
+                }
+
+                return {
+                    seed: this.seed,
+                    size: this.size,
+                    evil,
+                    biomes: biomes.sort((a, b) => a.pos - b.pos)
+                };
+            }
+
+            hasAdjacentBiomes(world, biome1, biome2) {
+                const positions = {};
+                world.biomes.forEach(b => positions[b.biome] = b.pos);
+                
+                if (!positions.hasOwnProperty(biome1) || !positions.hasOwnProperty(biome2)) {
+                    return false;
+                }
+                return Math.abs(positions[biome1] - positions[biome2]) === 1;
+            }
+        }
+
+        function displayWorld(world, container) {
+            const card = document.createElement('div');
+            card.className = 'result-card';
+
+            const title = document.createElement('h3');
+            title.textContent = `Seed: ${world.seed}`;
+            card.appendChild(title);
+
+            const info = document.createElement('p');
+            info.innerHTML = `<strong>World Size:</strong> ${world.size.charAt(0).toUpperCase() + world.size.slice(1)} | <strong>Evil Biome:</strong> ${world.evil}`;
+            card.appendChild(info);
+
+            const layout = document.createElement('div');
+            layout.className = 'biome-layout';
+            world.biomes.forEach((b, i) => {
+                const badge = document.createElement('span');
+                badge.className = 'biome-badge';
+                badge.textContent = b.biome;
+                layout.appendChild(badge);
+
+                if (i < world.biomes.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'biome-arrow';
+                    arrow.textContent = '→';
+                    layout.appendChild(arrow);
+                }
+            });
+            card.appendChild(layout);
+
+            container.appendChild(card);
+        }
+
+        function analyzeSeed() {
+            const seed = document.getElementById('seedInput').value.trim();
+            if (!seed) {
+                alert('Please enter a seed!');
+                return;
+            }
+
+            const size = document.getElementById('analyzeSeedSize').value;
+            const generator = new WorldGenerator(seed, size);
+            const world = generator.generate();
+
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>🔍 Seed Analysis Result</h2>';
+            displayWorld(world, results);
+
+            const adjacentPairs = document.createElement('div');
+            adjacentPairs.className = 'result-card';
+            adjacentPairs.innerHTML = '<h3>Adjacent Biome Pairs</h3>';
+            const list = document.createElement('ul');
+            for (let i = 0; i < world.biomes.length - 1; i++) {
+                const li = document.createElement('li');
+                li.textContent = `${world.biomes[i].biome} ↔ ${world.biomes[i + 1].biome}`;
+                list.appendChild(li);
+            }
+            adjacentPairs.appendChild(list);
+            results.appendChild(adjacentPairs);
+        }
+
+        async function findSeeds() {
+            if (!selectedBiome1 || !selectedBiome2) {
+                alert('Please select both biomes!');
+                return;
+            }
+
+            const size = document.getElementById('worldSize').value;
+            const numSeeds = parseInt(document.getElementById('numSeeds').value);
+            const maxAttempts = 10000;
+
+            const btn = document.getElementById('searchBtn');
+            btn.disabled = true;
+            btn.textContent = 'Searching...';
+
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            const found = [];
+            let attempts = 0;
+
+            status.innerHTML = `<div class="loading"></div>Searching for ${selectedBiome1} next to ${selectedBiome2}...`;
+
+            // Use setTimeout to prevent UI blocking
+            const searchBatch = () => {
+                const batchSize = 100;
+                const endAttempt = Math.min(attempts + batchSize, maxAttempts);
+
+                for (; attempts < endAttempt && found.length < numSeeds; attempts++) {
+                    const seed = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
+                    const generator = new WorldGenerator(seed, size);
+                    const world = generator.generate();
+
+                    if (generator.hasAdjacentBiomes(world, selectedBiome1, selectedBiome2)) {
+                        found.push(world);
+                        status.innerHTML = `<div class="loading"></div>Found ${found.length}/${numSeeds} seeds... (${attempts} attempts)`;
+                    }
+                }
+
+                if (found.length >= numSeeds || attempts >= maxAttempts) {
+                    // Complete
+                    status.innerHTML = found.length >= numSeeds
+                        ? `✅ Success! Found ${found.length} seeds after ${attempts} attempts.`
+                        : `⚠️ Found ${found.length}/${numSeeds} seeds after ${attempts} attempts.`;
+                    
+                    results.innerHTML = '<h2>🎉 Seeds Found</h2>';
+                    found.forEach(world => displayWorld(world, results));
+
+                    btn.disabled = false;
+                    btn.textContent = 'Find Seeds';
+                } else {
+                    // Continue searching
+                    setTimeout(searchBatch, 0);
+                }
+            };
+
+            searchBatch();
+        }
+
+        // Initialize on load
+        initBiomeGrids();
+    </script>
+</body>
+</html>
